@@ -19,7 +19,8 @@
       </div>
       <div id="gmap"/>
     </div>
-    <div class="col-12 lg:col-4">
+    <current-time-table :markers="markers" @delete="deleteMarkersOnMap" />
+    <!-- <div class="col-12 lg:col-4">
       <div class="card my-3">
         <current-time :marker="latestMarker"/>
       </div>
@@ -31,11 +32,12 @@
           <Column header="Place title" field="title"></Column>
         </DataTable>
       </div>
-    </div>
+    </div> -->
   </div>
 </template>
 <script setup>
 import { ref, watch, computed, reactive  } from "vue";
+import axios from 'axios';
 
 import AutoComplete from 'primevue/autocomplete';
 import InputText from "primevue/inputtext"
@@ -44,10 +46,12 @@ import Message from 'primevue/message';
 
 import { Loader } from "@googlemaps/js-api-loader"
 
+//import CurrentTimeTable from "src/components/CurrentTimeTable.vue"
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column';
 /* Map */
 var map;
+var isLocationUsed = false;
 
 const userInput = ref("");
 const autocomplete = ref([]);
@@ -80,6 +84,7 @@ initMap();
 const markers = ref([]);
 var markersOnMap = [];
 const selectedMarkers = ref();
+//Latest marker for showing the position on the map 
 const latestMarker = computed(()=>{
   return markers.value.length > 0 ? markers.value[0]:{}
 });
@@ -98,40 +103,42 @@ const createMarkers = (loc) => {
       map,
       title: loc.name
     })
-    markers.value.unshift(
-      {
-        uuid: crypto.randomUUID(),
-        title: marker.title,
-        lat: marker.getPosition().lat(),
-        lng: marker.getPosition().lng(),
-
+    const timestamp = new Date().getTime();
+    axios.get(
+      "https://maps.googleapis.com/maps/api/timezone/json?location="+marker.getPosition().lat()+"%2C"+marker.getPosition().lng()+"&timestamp="+timestamp.toString().substring(0,timestamp.toString().length-3)+"&key="+import.meta.env.VITE_GOOGLE_MAP_API_KEY
+    ).then(
+      (response) => {
+        if(response.data.status === "OK") {
+          markers.value.unshift(
+            {
+              uuid: crypto.randomUUID(),
+              title: marker.title,
+              lat: marker.getPosition().lat(),
+              lng: marker.getPosition().lng(),
+              timezoneOffset: parseInt(response.data.rawOffset / 3600),
+              daylightOffset: parseInt(response.data.dstOffset / 3600),
+              timezoneId: response.data.timeZoneId
+            }
+          );
+        }else{
+          msgList.value.unshift(
+            { severity: 'error', content: 'Google service is not connected. Please check the API Key.' , uuid:crypto.randomUUID()}
+          )
+        }
+        
       }
-    );
+    )
+    
     markersOnMap.unshift(marker)
   
 }
 
-const deleteMarkers = ()=>{
-  try{
-    for(let i = 0; i < selectedMarkers.value.length; i++){
-      for(let j = 0; j < markers.value.length; j++){
-        // remove records in table and the markers
-        if(selectedMarkers.value[i] === markers.value[j]){
-          markersOnMap[j].setMap(null);
-          markersOnMap.splice(j, 1)
-          markers.value.splice(j, 1);
-          break;
-        }
-      }
-    }
-  }catch(err){
-      //delete Empty
-      msgList.value.unshift(
-        { severity: 'error', content: 'There is no places in the table, please search a new location.' , uuid:crypto.randomUUID()}
-      )
-  }
-  selectedMarkers.value = [];
+const deleteMarkersOnMap = (j) => {
+  markersOnMap[j].setMap(null);
+  markersOnMap.splice(j, 1);
+  markers.value.splice(j, 1);
 }
+
 /* Location */
 const location = ref(null);
 /**
@@ -144,11 +151,25 @@ const handleUserLocation = () => {
       case "prompt":
         navigator.geolocation.getCurrentPosition(pos => {
           map.setCenter(new google.maps.LatLng(pos.coords.latitude, pos.coords.longitude) , 9);
+          if (!isLocationUsed){
+            new google.maps.Marker({
+              position: {lat:pos.coords.latitude, lng:pos.coords.longitude}, 
+              map,
+              title: "Your current location",
+              icon:"src/assets/current_marker.png"
+            })
+            isLocationUsed = true;
+          }else{
+            msgList.value.unshift(
+              { severity: 'info', content: 'The current location is marked. Please check the blue marker.' , uuid:crypto.randomUUID()}
+            )
+          }
+          
         })
         break;
       case "denied":
         msgList.value.unshift(
-          { severity: 'error', content: 'geolocation service is denied. Please grant the permission in your browser' , uuid:crypto.randomUUID()}
+          { severity: 'error', content: 'Geolocation service is denied. Please grant the permission in your browser' , uuid:crypto.randomUUID()}
         )
         break;
     }

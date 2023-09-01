@@ -7,11 +7,11 @@ import App from './App.vue'
 import "primevue/resources/themes/lara-light-indigo/theme.css";
 import 'primeicons/primeicons.css';
 
-import CurrentTime from './components/CurrentTime.vue'
+import CurrentTimeTable from './components/CurrentTimeTable.vue'
 
 const app = createApp(App)
 app.use(createPinia())
 app.use(PrimeVue);
-app.component('current-time',CurrentTime)
+app.component('current-time-table',CurrentTimeTable);
 
 app.mount('#app')
