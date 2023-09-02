@@ -20,7 +20,8 @@
                   currentPageReportTemplate="{first} to {last} of {totalRecords}">
           <Column selectionMode="multiple" headerStyle="width: 3rem"></Column>
           <Column header="Place title" field="title"></Column>
-          <Column header="Place current time" field="clock"></Column>
+          <Column header="Date" field="date"></Column>
+          <Column header="Time" field="clock"></Column>
         </DataTable>
       </div>
     </div>
@@ -31,7 +32,7 @@
     import {defineComponent, reactive, ref, watch} from "vue";
 
     const props = defineProps(['markers']);
-    const emits = defineEmits(['delete'])
+    const emits = defineEmits(['delete', 'report'])
     const selectedMarkers = ref();
 
     import DataTable from 'primevue/datatable'
@@ -48,7 +49,9 @@
             let timeString = String(now.getHours()).padStart(2, '0')
                 +":"+ String(now.getMinutes()).padStart(2, '0')
                 +":"+ String(now.getSeconds()).padStart(2, '0');
-                props.markers[i].clock = timeString;
+            props.markers[i].clock = timeString;
+            let dateString = now.getDate()+"/"+ (now.getMonth() + 1) +"/"+now.getFullYear()
+            props.markers[i].date = dateString;
         }
     
 
@@ -68,7 +71,7 @@
             }
             selectedMarkers.value = [];
         }catch(err){
-            console.log(err)
+            emits('report',"104")
         }
         
     }

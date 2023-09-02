@@ -1,0 +1,23 @@
+{
+    "001" :{
+        "severity": "info",
+        "content":"The current location is marked. Please check the blue marker."
+    },
+    "101" : {
+        "severity": "error",
+        "content":"Google service is not connected. Please check the API Key."
+    },
+    "102" : { 
+        "severity": "error",
+        "content":"Geolocation service is denied. Please grant the permission in your browser."
+    },
+    "103" : {
+        "severity": "error",
+        "content":"No searching result..."
+    },
+    "104" : {
+        "severity": "error",
+        "content":"Unable to delete. No records in the table."
+    }
+
+}

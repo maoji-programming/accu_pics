@@ -19,20 +19,7 @@
       </div>
       <div id="gmap"/>
     </div>
-    <current-time-table :markers="markers" @delete="deleteMarkersOnMap" />
-    <!-- <div class="col-12 lg:col-4">
-      <div class="card my-3">
-        <current-time :marker="latestMarker"/>
-      </div>
-      <div class="card my-3 p-3">
-        <Button id="delete-btn" class="full-width" icon="pi pi-trash" label="Delete Selected" @click="deleteMarkers()" severity="warning"/>
-        <DataTable id="place-table" :value="markers" v-model:selection="selectedMarkers" dataKey="uuid" :rows="10" paginator paginatorTemplate="FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
-                  currentPageReportTemplate="{first} to {last} of {totalRecords}">
-          <Column selectionMode="multiple" headerStyle="width: 3rem"></Column>
-          <Column header="Place title" field="title"></Column>
-        </DataTable>
-      </div>
-    </div> -->
+    <current-time-table :markers="markers" @delete="deleteMarkersOnMap" @report="addMessage"/>
   </div>
 </template>
 <script setup>
@@ -46,9 +33,10 @@ import Message from 'primevue/message';
 
 import { Loader } from "@googlemaps/js-api-loader"
 
-//import CurrentTimeTable from "src/components/CurrentTimeTable.vue"
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column';
+
+import msgMap from './utils/msg.json';
 /* Map */
 var map;
 var isLocationUsed = false;
@@ -121,9 +109,7 @@ const createMarkers = (loc) => {
             }
           );
         }else{
-          msgList.value.unshift(
-            { severity: 'error', content: 'Google service is not connected. Please check the API Key.' , uuid:crypto.randomUUID()}
-          )
+          addMessage("101");
         }
         
       }
@@ -160,17 +146,13 @@ const handleUserLocation = () => {
             })
             isLocationUsed = true;
           }else{
-            msgList.value.unshift(
-              { severity: 'info', content: 'The current location is marked. Please check the blue marker.' , uuid:crypto.randomUUID()}
-            )
+            addMessage("001");
           }
           
         })
         break;
       case "denied":
-        msgList.value.unshift(
-          { severity: 'error', content: 'Geolocation service is denied. Please grant the permission in your browser' , uuid:crypto.randomUUID()}
-        )
+        addMessage("102");
         break;
     }
     
@@ -184,6 +166,7 @@ const searchLocation = async (v) => {
   const request = {
     query: v,
     fields: ["name", "geometry"],
+    locationBias: map.getCenter()
   };
   const { PlacesService ,PlacesServiceStatus } = await google.maps.importLibrary("places")
   const service = new PlacesService(map);
@@ -194,9 +177,7 @@ const searchLocation = async (v) => {
         userInput.value="";
       }
     }else{
-      msgList.value.unshift(
-        { severity: 'error', content: 'No Searching Result...' , uuid:crypto.randomUUID()}
-      )
+      addMessage("103");
     }
   });
 }
@@ -212,6 +193,16 @@ const suggestLocation = async (event) => {
     });
     
   }
+
+  /**
+   * Show message
+   */
+
+const addMessage = (msgId) => {
+  msgList.value.unshift(
+    { ...msgMap[msgId], uuid:crypto.randomUUID()}
+  )
+}
 </script>
 
 <style scoped>
