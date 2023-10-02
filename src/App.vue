@@ -51,7 +51,7 @@ var loader;
 const initMap = () => {
 
   loader = new Loader({
-    apiKey: import.meta.env.VITE_GOOGLE_MAP_API_KEY,
+    apiKey: process.env.VITE_GOOGLE_MAP_API_KEY,
     version: "weekly",
   });
 
