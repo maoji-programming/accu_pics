@@ -46,12 +46,12 @@ const autocomplete = ref([]);
 const autocompleteShow = computed(()=>{return autocomplete.value.map((record) => {return record.description})});
 
 const msgList = ref([]);
-
+const apiKey = import.meta.env.VITE_GOOGLE_MAP_API_KEY
 var loader;
 const initMap = () => {
 
   loader = new Loader({
-    apiKey: process.env.VITE_GOOGLE_MAP_API_KEY,
+    apiKey: apiKey,
     version: "weekly",
   });
 
